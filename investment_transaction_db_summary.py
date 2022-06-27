@@ -68,21 +68,21 @@ SELECT
     CurrentTotalRealizedGain,
     CurrentTotalDividend
 FROM LatestAverageCostBasisByYear
-WHERE abs(CurrentTotalRealizedGain) > {} OR abs(CurrentTotalDividend) > {}
-'''.format(FLOAT_EPS, FLOAT_EPS)
+'''
 
 LATEST_REALIZED_GAIN_QUERY_1 = '''
 SELECT *
 FROM LatestRealizedGain
+WHERE abs(CurrentTotalRealizedGain) > {} OR abs(CurrentTotalDividend) > {}
 ORDER BY Year, Symbol, Account
-'''
+'''.format(FLOAT_EPS, FLOAT_EPS)
 
 LATEST_REALIZED_GAIN_QUERY_2 = '''
 SELECT
     Year,
     Account,
-    sum(CurrentTotalRealizedGain),
-    sum(CurrentTotalDividend)
+    sum(CurrentTotalRealizedGain) AS NonCumulativeTotalRealizedGain,
+    sum(CurrentTotalDividend) AS NonCumulativeTotalDividend
 FROM LatestRealizedGain
 GROUP BY Year, Account
 ORDER BY Year, Account
