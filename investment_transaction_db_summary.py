@@ -98,17 +98,27 @@ GROUP BY Year, Account
 ORDER BY Year, Account;
 '''
 
+LATEST_AVERAGE_COST_BASIS_SYMBOL_SEQUENCE_NUMBER_VIEW_1 = '''
+DROP VIEW IF EXISTS LatestAverageCostBasisSymbolSequenceNumber
+'''
+
+LATEST_AVERAGE_COST_BASIS_SYMBOL_SEQUENCE_NUMBER_VIEW_2 = '''
+CREATE VIEW LatestAverageCostBasisSymbolSequenceNumber (SequenceNumber) AS
+SELECT max(SequenceNumber) AS SequenceNumber
+FROM AverageCostBasis
+GROUP BY Symbol, Account
+'''
+
 HOLDINGS_QUERY = '''
 SELECT
     Symbol,
     Account,
-    max(CurrentQuantity) AS Quantity,
-    max(CurrentAverageCostBasis) AS AverageCostBasis,
-    max(CurrentQuantity) * max(CurrentAverageCostBasis) AS BookValue,
-    max(RecordDate) AS LastActivity
-FROM AverageCostBasis
-GROUP BY Symbol, Account
-HAVING SequenceNumber >= max(SequenceNumber) AND CurrentQuantity > {}
+    CurrentQuantity AS Quantity,
+    CurrentAverageCostBasis AS AverageCostBasis,
+    CurrentQuantity * CurrentAverageCostBasis AS BookValue,
+    RecordDate AS LastActivity
+FROM AverageCostBasis NATURAL JOIN LatestAverageCostBasisSymbolSequenceNumber
+WHERE CurrentQuantity > {}
 ORDER BY Symbol, Account
 '''.format(FLOAT_EPS)
 
@@ -129,6 +139,8 @@ if __name__ == '__main__':
         cur.execute(LATEST_AVERAGE_COST_BASIS_BY_YEAR_VIEW_4)
         cur.execute(LATEST_REALIZED_GAIN_VIEW_1)
         cur.execute(LATEST_REALIZED_GAIN_VIEW_2)
+        cur.execute(LATEST_AVERAGE_COST_BASIS_SYMBOL_SEQUENCE_NUMBER_VIEW_1)
+        cur.execute(LATEST_AVERAGE_COST_BASIS_SYMBOL_SEQUENCE_NUMBER_VIEW_2)
 
         print('# Realized gain by year, symbol, account')
         it = cur.execute(LATEST_REALIZED_GAIN_QUERY_1)
